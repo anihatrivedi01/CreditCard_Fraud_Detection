@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg[binary]
+numpy
+pandas
+joblib
+scikit-learn
+xgboost
+imbalanced-learn

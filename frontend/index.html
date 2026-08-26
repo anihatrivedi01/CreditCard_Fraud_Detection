@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Argus · Real-time Fraud Detection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="grain"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand__mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <circle cx="20" cy="20" r="18.5" stroke="var(--primary)" stroke-width="1.4"/>
+        <circle cx="20" cy="20" r="10.5" stroke="var(--primary)" stroke-width="1.4" opacity="0.55"/>
+        <circle cx="20" cy="20" r="3.4" fill="var(--primary)"/>
+      </svg>
+      <div class="brand__text">
+        <span class="brand__name">ARGUS</span>
+        <span class="brand__tag">fraud intelligence</span>
+      </div>
+    </div>
+
+    <div class="topbar__status">
+      <span class="topbar__clock" id="clock">--:--:--</span>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <!-- ============ INTAKE PANEL ============ -->
+    <section class="panel intake" aria-labelledby="intake-heading">
+      <div class="panel__head">
+        <span class="eyebrow">01 — Transaction intake</span>
+        <h1 id="intake-heading">Screen a transaction</h1>
+        <p class="panel__sub">Enter the details below. Argus checks them against the live risk model and this card's 24-hour activity.</p>
+      </div>
+
+      <form id="txn-form" class="form" novalidate>
+
+        <div class="field">
+          <label for="card_id">Card ID</label>
+          <input type="text" id="card_id" name="card_id" placeholder="e.g. 1001" required inputmode="text" autocomplete="off">
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="amount">Amount (₹)</label>
+            <input type="number" id="amount" name="amount" placeholder="5000" min="0" step="0.01" required>
+          </div>
+          <div class="field">
+            <label for="cardholder_age">Cardholder age</label>
+            <input type="number" id="cardholder_age" name="cardholder_age" placeholder="25" min="18" max="120" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="merchant_category">Merchant category</label>
+          <div class="select-wrap">
+            <select id="merchant_category" name="merchant_category" required>
+              <option value="Food">Food</option>
+              <option value="Clothing">Clothing</option>
+              <option value="Travel">Travel</option>
+              <option value="Grocery">Grocery</option>
+              <option value="Electronics">Electronics</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <fieldset class="field toggle-field">
+            <legend>Foreign transaction</legend>
+            <div class="pill-group" data-name="foreign_transaction">
+              <button type="button" class="pill" data-value="0" aria-pressed="true">No</button>
+              <button type="button" class="pill" data-value="1" aria-pressed="false">Yes</button>
+            </div>
+          </fieldset>
+
+          <fieldset class="field toggle-field">
+            <legend>Location mismatch</legend>
+            <div class="pill-group" data-name="location_mismatch">
+              <button type="button" class="pill" data-value="0" aria-pressed="true">No</button>
+              <button type="button" class="pill" data-value="1" aria-pressed="false">Yes</button>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="field">
+          <label for="device_trust_score">
+            Device trust score
+            <span class="range-value" id="device_trust_score_out">0.80</span>
+          </label>
+          <input type="range" id="device_trust_score" name="device_trust_score" min="0" max="1" step="0.01" value="0.8">
+          <div class="range-scale"><span>Unrecognized</span><span>Fully trusted</span></div>
+        </div>
+
+        <button type="button" class="btn-primary" id="submit-btn">
+          <span class="btn-label">Run fraud check</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
+
+        <p class="form-note" id="form-error" role="alert"></p>
+      </form>
+    </section>
+
+    <!-- ============ RESULT PANEL ============ -->
+    <aside class="panel assessment" id="assessment-panel" aria-labelledby="assessment-heading">
+      <div class="scanline" id="scanline" aria-hidden="true"></div>
+
+      <div class="panel__head">
+        <span class="eyebrow">02 — Risk assessment</span>
+        <h2 id="assessment-heading">Verdict</h2>
+      </div>
+
+      <div class="gauge-wrap" aria-live="polite">
+        <svg class="gauge" viewBox="0 0 200 120" aria-hidden="true">
+          <path class="gauge__track" d="M 20 100 A 80 80 0 0 1 180 100" />
+          <path class="gauge__value" id="gauge-arc" d="M 20 100 A 80 80 0 0 1 180 100" />
+        </svg>
+        <div class="gauge__readout">
+          <span class="gauge__percent" id="gauge-percent">—</span>
+          <span class="gauge__verdict" id="gauge-verdict">Awaiting input</span>
+        </div>
+      </div>
+
+      <dl class="meta-grid" id="meta-grid">
+        <div class="meta-item">
+          <dt>Card status</dt>
+          <dd id="meta-card-status">—</dd>
+        </div>
+        <div class="meta-item">
+          <dt>Velocity, 24h</dt>
+          <dd id="meta-velocity">—</dd>
+        </div>
+        <div class="meta-item">
+          <dt>Checked at</dt>
+          <dd id="meta-time">—</dd>
+        </div>
+      </dl>
+
+      <p class="mode-note" id="mode-note" hidden></p>
+      <!-- ============ ANALYST RISK ASSESSMENT ============ -->
+
+      
+
+      <div class="risk-analysis" id="risk-analysis" hidden>
+        <div id="model-warning"></div>
+        <div class="ledger__head">
+          <span class="eyebrow">Analyst assessment</span>
+        </div>
+
+        <div class="risk-section">
+          <span class="risk-section__label">Risk Indicators</span>
+
+          <ul class="risk-factors" id="risk-factors-list"></ul>
+        </div>
+
+        <div class="risk-recommendation">
+          <span class="risk-section__label">Recommendation</span>
+          <p id="risk-recommendation-text"></p>
+        </div>
+
+      </div>
+
+      <div class="ledger">
+        <div class="ledger__head">
+          <span class="eyebrow">Session log</span>
+          <span class="ledger__count" id="ledger-count">0 checks</span>
+        </div>
+        <ul class="ledger__list" id="ledger-list">
+          <li class="ledger__empty" id="ledger-empty">No checks run yet this session.</li>
+        </ul>
+      </div>
+        <div class="ledger history">
+          <div class="ledger__head">
+            <span class="eyebrow">Transaction history</span>
+            <span class="ledger__count" id="history-count">0 transactions</span>
+          </div>
+
+          <ul class="ledger__list" id="history-list">
+            <li class="ledger__empty" id="history-empty">
+            Enter a card ID to view transaction history.
+            </li>
+          </ul>
+      </div>
+    </aside>
+
+  </main>
+
+  <footer class="foot">
+    <span>Argus is a decision-support tool. High-risk verdicts should be reviewed by an analyst before action is taken.</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
