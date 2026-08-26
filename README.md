@@ -336,15 +336,11 @@ I deployed the frontend and backend separately.
 
 ARGUS deployment:
 
-User
-↓
-Netlify Frontend
-↓
-HTTPS / CORS
-↓
-Vercel FastAPI Backend
-↓
-XGBoost Model + Neon PostgreSQL
+1. User
+2. Netlify Frontend
+3. HTTPS / CORS
+4. Vercel FastAPI Backend
+5. XGBoost Model + Neon PostgreSQL
 
 ### Frontend
 
