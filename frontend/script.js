@@ -9,7 +9,7 @@
 // -----------------------------------------------------------
 
 // FastAPI backend deployed on Vercel
-const API_BASE_URL = "https://credit-card-fraud-detection-3pkftltmm-aniha-trivedi.vercel.app";
+const API_BASE_URL = "https://credit-card-fraud-detection-five-kohl.vercel.app";
 
 const API_URL = `${API_BASE_URL}/predict`;
 
