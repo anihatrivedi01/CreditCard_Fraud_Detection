@@ -8,9 +8,10 @@
 // API
 // -----------------------------------------------------------
 
-// FastAPI endpoint
-const API_URL = "/predict";
+// FastAPI backend deployed on Vercel
+const API_BASE_URL = "https://credit-card-fraud-detection-3pkftltmm-aniha-trivedi.vercel.app";
 
+const API_URL = `${API_BASE_URL}/predict`;
 
 // -----------------------------------------------------------
 // DOM elements
@@ -287,7 +288,7 @@ function addLedgerRow({
 async function loadTransactionHistory(cardId) {
     try {
         const response = await fetch(
-            `/transactions/${encodeURIComponent(cardId)}`
+            `${API_BASE_URL}/transactions/${encodeURIComponent(cardId)}`
         );
 
         if (!response.ok) {

@@ -27,7 +27,9 @@ app = FastAPI(title="Credit Card Fraud Detection API", version="1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://flourishing-biscuit-0da377.netlify.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

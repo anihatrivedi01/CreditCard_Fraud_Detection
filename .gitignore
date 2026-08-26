@@ -4,3 +4,5 @@ __pycache__/
 .env
 fraud_detection.db
 .ipynb_checkpoints/
+data/
+notebooks/
