@@ -18,23 +18,15 @@ Fraud detection is a problem where fraudulent transactions are much fewer than l
 
 This project gave me the opportunity to work through the complete process:
 
-Dataset
-↓
-Data preprocessing
-↓
-Feature engineering
-↓
-Imbalanced data handling
-↓
-Model training & tuning
-↓
-FastAPI backend
-↓
-PostgreSQL database
-↓
-Frontend
-↓
-Cloud deployment
+1. Dataset
+2. Data preprocessing
+3. Feature engineering
+4. Imbalanced data handling
+5. Model training & tuning
+6. FastAPI backend
+7. PostgreSQL database
+8. Frontend
+9. Cloud deployment
 
 ## What ARGUS Does
 
