@@ -376,27 +376,29 @@ Working through these issues helped me understand that deploying an ML project i
 
 CreditCard_Fraud_Detection/
 
-├── backend/
-│   ├── database.py
-│   ├── main.py
-│   ├── models.py
-│   └── schemas.py
-│
-├── frontend/
-│   ├── index.html
-│   ├── script.js
-│   └── styles.css
-│
-├── model/
-│   └── final_xgboost_fraud_pipeline.pkl
-│
-├── notebooks/
-│   └── ...
-│
-├── app.py
-├── requirements.txt
-├── .gitignore
-└── README.md
+- backend/
+  - database.py
+  - main.py
+  - models.py
+  - schemas.py
+
+- frontend/
+  - index.html
+  - script.js
+  - styles.css
+
+- model/
+  - final_xgboost_fraud_pipeline.pkl
+
+- notebooks/
+  - EDA_and_Preprocessing.ipynb
+  - final_modeling.ipynb
+  - modeling.ipynb
+
+- app.py
+- requirements.txt
+- .gitignore
+- README.md
 
 ## Running Locally
 
