@@ -761,10 +761,8 @@ submitBtn.addEventListener("click", async () => {
         // Show real API error
         // ---------------------------------------------------
 
-        formError.textContent =
-            "Unable to connect to the fraud detection server. " +
-            "Make sure FastAPI is running on port 8000.";
-
+     formError.textContent =
+        `Request failed: ${error.message}`;  
 
         modeNote.hidden = true;
 
