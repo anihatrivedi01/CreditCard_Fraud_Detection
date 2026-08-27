@@ -154,7 +154,6 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
         card = Card(card_id=transaction.card_id)
         db.add(card)
         db.commit()
-        db.refresh(card)
 
         card_creation_time = time.perf_counter() - start
 
@@ -239,7 +238,6 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
 
     db.add(new_transaction)
     db.commit()
-    db.refresh(new_transaction)
 
     transaction_save_time = time.perf_counter() - start
 
