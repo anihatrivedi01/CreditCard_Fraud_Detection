@@ -149,12 +149,18 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
     card_lookup_time = time.perf_counter() - start
 
     if not card:
+        start = time.perf_counter()
+
         card = Card(card_id=transaction.card_id)
         db.add(card)
         db.commit()
         db.refresh(card)
+
+        card_creation_time = time.perf_counter() - start
+
         card_status = "New card registered"
     else:
+        card_creation_time = 0
         card_status = "Existing card"
         
     current_time = datetime.now()
@@ -251,6 +257,7 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
         "recommendation": recommendation,
         "debug_timings": {
             "card_lookup": round(card_lookup_time, 3),
+            "card_creation": round(card_creation_time, 3),
             "velocity_query": round(velocity_query_time, 3),
             "model_prediction": round(model_prediction_time, 3),
             "transaction_save": round(transaction_save_time, 3),
