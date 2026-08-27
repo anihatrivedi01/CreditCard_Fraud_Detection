@@ -1,4 +1,5 @@
 import os
+import time
 import joblib
 import numpy as np
 import pandas as pd
@@ -140,7 +141,12 @@ def check_model_input_range(transaction, velocity_24h):
 
 @app.post("/predict")
 def predict(transaction: TransactionSchema, db=Depends(get_db)):
+    total_start = time.perf_counter()
+    start = time.perf_counter()
+
     card = db.query(Card).filter(Card.card_id == transaction.card_id).first()
+
+    card_lookup_time = time.perf_counter() - start
 
     if not card:
         card = Card(card_id=transaction.card_id)
@@ -153,12 +159,14 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
         
     current_time = datetime.now()
     start_time = current_time - timedelta(hours=24)
-
+    
+    start = time.perf_counter()
     velocity_24h = db.query(func.count(TransactionModel.id)).filter(
         TransactionModel.card_id == card.id,
         TransactionModel.transaction_time >= start_time,
         TransactionModel.transaction_time < current_time
     ).scalar()
+    velocity_query_time = time.perf_counter() - start
     
     model_warnings = check_model_input_range(transaction, velocity_24h)
     # Cardholder-local hour, not the server's. current_time stays naive so the
@@ -193,8 +201,12 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
     
     clean_input_df = input_df.drop(columns=['amount', 'device_trust_score'])
     
+    start = time.perf_counter()
+
     fraud_probability = float(model.predict_proba(clean_input_df)[0][1])
     fraud_percentage = float(fraud_probability * 100)
+
+    model_prediction_time = time.perf_counter() - start
 
     risk_factors, recommendation = generate_risk_factors(
         transaction,
@@ -217,9 +229,13 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
         transaction_time=current_time
     )
 
+    start = time.perf_counter()
+
     db.add(new_transaction)
     db.commit()
     db.refresh(new_transaction)
+
+    transaction_save_time = time.perf_counter() - start
 
     return {
         "card_id": transaction.card_id,
@@ -232,7 +248,14 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
         "risk_tier": risk_tier,
         "message": tier_message,
         "risk_factors": risk_factors,
-        "recommendation": recommendation
+        "recommendation": recommendation,
+        "debug_timings": {
+            "card_lookup": round(card_lookup_time, 3),
+            "velocity_query": round(velocity_query_time, 3),
+            "model_prediction": round(model_prediction_time, 3),
+            "transaction_save": round(transaction_save_time, 3),
+            "total": round(time.perf_counter() - total_start, 3)
+        }
     }
 
 @app.get("/transactions/{card_id}")
