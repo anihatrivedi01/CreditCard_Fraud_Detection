@@ -141,24 +141,17 @@ trustSlider.addEventListener("input", () => {
 // Gauge
 // -----------------------------------------------------------
 
-function setGauge(percent, status) {
-
+function setGauge(percent, status, riskTier) {
     const clamped =
         Math.max(0, Math.min(100, percent));
 
     const offset =
         GAUGE_CIRCUMFERENCE -
         (clamped / 100) * GAUGE_CIRCUMFERENCE;
-
     gaugeArc.style.strokeDashoffset = offset;
-
-
-    // Use the backend's actual prediction status
-    // as the source of truth.
 
     let state;
     let color;
-
     if (status === "Fraud") {
 
         state = "danger";
@@ -174,11 +167,7 @@ function setGauge(percent, status) {
         state = "safe";
         color = "var(--safe)";
     }
-
-
     gaugeArc.style.stroke = color;
-
-
     assessmentPanel.classList.remove(
         "state-safe",
         "state-warn",
@@ -193,14 +182,18 @@ function setGauge(percent, status) {
     gaugePercent.textContent =
         `${clamped.toFixed(2)}%`;
 
+    // Show the operational risk tier as the verdict.
+    // Falls back to the plain Fraud/Legitimate call if the
+    // backend did not send a tier.
+
     gaugeVerdict.textContent =
-        status === "Fraud"
-            ? "Fraud flagged"
-            : "Legitimate";
+        riskTier ||
+        (status === "Fraud" ? "Fraud flagged" : "Legitimate");
 
 
     return state;
 }
+
 
 
 // -----------------------------------------------------------
@@ -671,10 +664,12 @@ submitBtn.addEventListener("click", async () => {
         // ---------------------------------------------------
 
         const state =
-            setGauge(
-                result.fraud_probability,
-                result.status
-            );
+    setGauge(
+        result.fraud_probability,
+        result.status,
+        result.risk_tier
+    );
+
 
 
         // ---------------------------------------------------
@@ -693,12 +688,15 @@ submitBtn.addEventListener("click", async () => {
             }`;
 
 
-        const checkedAt =
-            new Date(
-                result.transaction_time ||
-                Date.now()
-            );
+        const rawTime = result.transaction_time;
 
+        const checkedAt = rawTime
+            ? new Date(
+                rawTime.endsWith("Z") || rawTime.includes("+")
+                    ? rawTime
+                    : rawTime + "Z"
+            )
+            : new Date();
 
         metaTime.textContent =
             checkedAt.toLocaleTimeString(

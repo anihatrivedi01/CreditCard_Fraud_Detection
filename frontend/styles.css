@@ -567,7 +567,8 @@ input[type="range"]::-moz-range-thumb{
 
   transform: translateY(-50%);
 
-  background: var(--safe);
+  /* Risk indicator dots are always red, at every risk level. */
+  background: var(--danger);
 }
 
 .risk-recommendation {
@@ -596,10 +597,6 @@ input[type="range"]::-moz-range-thumb{
   border-color: rgba(255, 190, 70, 0.35);
 }
 
-.risk-analysis.risk-medium .risk-factors li::before {
-  background: var(--warn);
-}
-
 .risk-analysis.risk-medium .risk-recommendation {
   border-color: rgba(255, 190, 70, 0.35);
 }
@@ -608,10 +605,6 @@ input[type="range"]::-moz-range-thumb{
 
 .risk-analysis.risk-high .risk-factors li {
   border-color: rgba(255, 90, 120, 0.4);
-}
-
-.risk-analysis.risk-high .risk-factors li::before {
-  background: var(--danger);
 }
 
 .risk-analysis.risk-high .risk-recommendation {
