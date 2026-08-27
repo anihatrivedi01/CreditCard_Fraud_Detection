@@ -1,16 +1,12 @@
 import os
-import time
 import joblib
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 
-# The model learned transaction_hour from data in the cardholders' local time,
-# where 00:00-03:00 carries a 7.3% fraud rate against 0.36% for the rest of the
-# day. Vercel runs on UTC, so reading the hour off the server clock scored
-# 05:30-09:30 IST -- ordinary Indian morning activity -- as middle-of-the-night.
-# Derive the hour in the cardholders' timezone instead of the server's.
+# The model learned transaction_hour from data in the cardholders' local time.
+# Vercel runs on UTC, so convert to IST before sending the hour to the model.
 LOCAL_TZ = timezone(timedelta(hours=5, minutes=30))  # IST
 
 from fastapi import FastAPI, Depends, HTTPException
@@ -141,37 +137,28 @@ def check_model_input_range(transaction, velocity_24h):
 
 @app.post("/predict")
 def predict(transaction: TransactionSchema, db=Depends(get_db)):
-    total_start = time.perf_counter()
-    start = time.perf_counter()
 
     card = db.query(Card).filter(Card.card_id == transaction.card_id).first()
 
-    card_lookup_time = time.perf_counter() - start
 
     if not card:
-        start = time.perf_counter()
 
         card = Card(card_id=transaction.card_id)
         db.add(card)
         db.commit()
 
-        card_creation_time = time.perf_counter() - start
-
         card_status = "New card registered"
     else:
-        card_creation_time = 0
         card_status = "Existing card"
         
     current_time = datetime.now()
     start_time = current_time - timedelta(hours=24)
     
-    start = time.perf_counter()
     velocity_24h = db.query(func.count(TransactionModel.id)).filter(
         TransactionModel.card_id == card.id,
         TransactionModel.transaction_time >= start_time,
         TransactionModel.transaction_time < current_time
     ).scalar()
-    velocity_query_time = time.perf_counter() - start
     
     model_warnings = check_model_input_range(transaction, velocity_24h)
     # Cardholder-local hour, not the server's. current_time stays naive so the
@@ -205,13 +192,10 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
     ).astype(int)
     
     clean_input_df = input_df.drop(columns=['amount', 'device_trust_score'])
-    
-    start = time.perf_counter()
+
 
     fraud_probability = float(model.predict_proba(clean_input_df)[0][1])
     fraud_percentage = float(fraud_probability * 100)
-
-    model_prediction_time = time.perf_counter() - start
 
     risk_factors, recommendation = generate_risk_factors(
         transaction,
@@ -234,12 +218,9 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
         transaction_time=current_time
     )
 
-    start = time.perf_counter()
-
     db.add(new_transaction)
     db.commit()
 
-    transaction_save_time = time.perf_counter() - start
 
     return {
         "card_id": transaction.card_id,
@@ -252,15 +233,7 @@ def predict(transaction: TransactionSchema, db=Depends(get_db)):
         "risk_tier": risk_tier,
         "message": tier_message,
         "risk_factors": risk_factors,
-        "recommendation": recommendation,
-        "debug_timings": {
-            "card_lookup": round(card_lookup_time, 3),
-            "card_creation": round(card_creation_time, 3),
-            "velocity_query": round(velocity_query_time, 3),
-            "model_prediction": round(model_prediction_time, 3),
-            "transaction_save": round(transaction_save_time, 3),
-            "total": round(time.perf_counter() - total_start, 3)
-        }
+        "recommendation": recommendation
     }
 
 @app.get("/transactions/{card_id}")
